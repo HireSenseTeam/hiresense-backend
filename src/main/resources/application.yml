@@ -1,0 +1,5 @@
+spring:
+  profiles:
+    active: local
+
+# --- Common settings for all profiles will go here ---
