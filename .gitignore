@@ -50,4 +50,4 @@ Thumbs.db
 
 # Local configuration
 application-local.properties
-application.yml
+.env

@@ -1,5 +1,17 @@
 spring:
   profiles:
-    active: local
+    active: dev
 
-# --- Common settings for all profiles will go here ---
+  datasource:
+    url: jdbc:mysql://localhost:3306/hiresense?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update # In production, use 'validate' or 'none'
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
