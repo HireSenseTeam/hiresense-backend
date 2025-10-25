@@ -49,7 +49,7 @@ public class Resume extends BaseTimeEntity {
     private WorkCondition workCondition;
 
     @Builder
-    public Resume(String name, String address, Gender gender, String birthYear, String phone, String email, String homePhone, AcademicRecord academicRecord, JobPreference jobPreference, String desiredRegion, Integer desiredSalary, WorkCondition workCondition) {
+    private Resume(String name, String address, Gender gender, String birthYear, String phone, String email, String homePhone, AcademicRecord academicRecord, JobPreference jobPreference, String desiredRegion, Integer desiredSalary, WorkCondition workCondition) {
         this.name = name;
         this.address = address;
         this.gender = gender;
