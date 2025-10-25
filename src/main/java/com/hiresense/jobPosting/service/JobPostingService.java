@@ -1,6 +1,6 @@
 package com.hiresense.jobPosting.service;
 
-import com.hiresense.global.error.exception.ResumeNotFoundException;
+import com.hiresense.global.error.exception.JobPostingNotFoundException;
 import com.hiresense.jobPosting.domain.JobPosting;
 import com.hiresense.jobPosting.dto.request.JobPostingRequest;
 import com.hiresense.jobPosting.dto.request.JobPostingUpdateRequest;
@@ -31,17 +31,17 @@ public class JobPostingService {
     }
 
     public JobPostingResponse findById(Long id) {
-        log.info("ID {} 이력서 조회를 시작합니다.", id);
+        log.info("ID {} 채용공고 조회를 시작합니다.", id);
         JobPosting jobPosting = jobPostingRepository.findById(id)
-                .orElseThrow(ResumeNotFoundException::new);
-        log.info("ID {} 이력서 조회가 완료되었습니다.", id);
+                .orElseThrow(JobPostingNotFoundException::new);
+        log.info("ID {} 채용공고 조회가 완료되었습니다.", id);
         return JobPostingResponse.from(jobPosting);
     }
 
     public List<JobPostingResponse> findAll() {
-        log.info("모든 이력서 조회를 시작합니다.");
+        log.info("모든 채용공고 조회를 시작합니다.");
         List<JobPosting> jobPostings = jobPostingRepository.findAll();
-        log.info("총 {}개의 이력서 조회가 완료되었습니다.", jobPostings.size());
+        log.info("총 {}개의 채용공고 조회가 완료되었습니다.", jobPostings.size());
         return jobPostings.stream()
                 .map(JobPostingResponse::from)
                 .collect(Collectors.toList());
@@ -49,19 +49,19 @@ public class JobPostingService {
 
     @Transactional
     public void update(Long id, JobPostingUpdateRequest request) {
-        log.info("ID {} 이력서 수정을 시작합니다.", id);
+        log.info("ID {} 채용공고 수정을 시작합니다.", id);
         JobPosting jobPosting = jobPostingRepository.findById(id)
-                .orElseThrow(ResumeNotFoundException::new);
+                .orElseThrow(JobPostingNotFoundException::new);
         jobPosting.updateJobPosting(request);
-        log.info("ID {} 이력서 수정이 완료되었습니다.", id);
+        log.info("ID {} 채용공고 수정이 완료되었습니다.", id);
     }
 
     @Transactional
     public void delete(Long id) {
-        log.info("ID {} 이력서 삭제를 시작합니다.", id);
+        log.info("ID {} 채용공고 삭제를 시작합니다.", id);
         JobPosting jobPosting = jobPostingRepository.findById(id)
-                .orElseThrow(ResumeNotFoundException::new);
+                .orElseThrow(JobPostingNotFoundException::new);
         jobPostingRepository.delete(jobPosting);
-        log.info("ID {} 이력서 삭제가 완료되었습니다.", id);
+        log.info("ID {} 채용공고 삭제가 완료되었습니다.", id);
     }
 }
