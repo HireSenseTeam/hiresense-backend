@@ -1,11 +1,15 @@
+server:
+  port: 8000
+  address: 0.0.0.0
+
 spring:
   profiles:
     active: dev
 
   datasource:
-    url: jdbc:mysql://localhost:3306/hiresense?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: root
-    password: ${DB_PASSWORD}
+    url: jdbc:mysql://linkbig-ht-20.czwmu86ms4yl.us-east-1.rds.amazonaws.com:3306/hiresense?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: admin
+    password: hiresense12
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -15,3 +19,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+cloud:
+  aws:
+    s3:
+      bucket: linkbig-ht-20-ai-interview-storage
