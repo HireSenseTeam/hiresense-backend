@@ -8,8 +8,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import lombok.AllArgsConstructor;
+
 @Entity
 @Getter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Question {
     @Id
@@ -29,10 +33,4 @@ public class Question {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "resume_id")
     private Resume resume;
-
-    @Builder
-    public Question(String text, QuestionType type) {
-        this.text = text;
-        this.type = type;
-    }
 }
