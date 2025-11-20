@@ -23,4 +23,24 @@ public class InterviewQuestion {
     private Question question;
 
     private int questionOrder;
+
+    public void setInterviewSession(InterviewSession interviewSession) {
+        this.interviewSession = interviewSession;
+    }
+
+    public void setQuestion(Question question) {
+        this.question = question;
+    }
+
+    public void setQuestionOrder(int questionOrder) {
+        this.questionOrder = questionOrder;
+    }
+
+    public static InterviewQuestion create(InterviewSession session, Question question, int order) {
+        InterviewQuestion interviewQuestion = new InterviewQuestion();
+        interviewQuestion.setInterviewSession(session);
+        interviewQuestion.setQuestion(question);
+        interviewQuestion.setQuestionOrder(order);
+        return interviewQuestion;
+    }
 }

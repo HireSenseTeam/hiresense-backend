@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hiresense API 테스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            border-left-color: #4caf50;
+            background: #f1f8f4;
+        }
+        .error {
+            border-left-color: #f44336;
+            background: #fff5f5;
+        }
+        .config {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ffc107;
+        }
+        .config input {
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Hiresense API 테스트</h1>
+        
+        <div class="config">
+            <h2>⚙️ 서버 설정</h2>
+            <label>API Base URL:</label>
+            <input type="text" id="apiBaseUrl" value="http://192.168.35.27:8000" placeholder="http://192.168.35.27:8000">
+            <small>Expo Go 테스트 시: 모바일에서 접근 가능한 IP 주소로 변경하세요</small>
+        </div>
+
+        <!-- 채용공고 생성 -->
+        <div class="section">
+            <h2>1. 채용공고 생성</h2>
+            <input type="text" id="companyName" placeholder="회사명" value="테스트 회사">
+            <input type="text" id="jobTitle" placeholder="직무" value="백엔드 개발자">
+            <input type="text" id="workLocation" placeholder="근무지" value="서울">
+            <textarea id="idealCandidate" placeholder="인재상" rows="3">협업 능력이 뛰어나고, 문제 해결 능력이 뛰어난 개발자</textarea>
+            <textarea id="jobDescription" placeholder="주요 업무" rows="3">Spring Boot 기반 백엔드 개발, API 설계 및 개발</textarea>
+            <textarea id="qualifications" placeholder="자격 요건" rows="2">Java, Spring Boot 경험</textarea>
+            <textarea id="preferredQualifications" placeholder="우대사항 (선택사항)" rows="2"></textarea>
+            <button onclick="createJobPosting()">채용공고 생성</button>
+            <div id="jobPostingResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- 이력서 생성 -->
+        <div class="section">
+            <h2>2. 이력서 생성</h2>
+            <input type="text" id="resumeName" placeholder="이름" value="홍길동">
+            <input type="email" id="resumeEmail" placeholder="이메일" value="test@example.com">
+            <input type="text" id="phone" placeholder="전화번호" value="010-1234-5678">
+            <input type="text" id="major" placeholder="전공" value="컴퓨터공학">
+            <input type="text" id="desiredJob" placeholder="희망 직무" value="백엔드 개발자">
+            <button onclick="createResume()">이력서 생성</button>
+            <div id="resumeResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- 면접 시작 -->
+        <div class="section">
+            <h2>3. 면접 시작</h2>
+            <input type="number" id="jobId" placeholder="채용공고 ID" value="1">
+            <input type="email" id="applicantEmail" placeholder="지원자 이메일" value="test@example.com">
+            <button onclick="startInterview()">면접 시작</button>
+            <div id="interviewStartResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- 답변 제출 -->
+        <div class="section">
+            <h2>4. 답변 제출</h2>
+            <input type="text" id="sessionId" placeholder="Session ID">
+            <textarea id="answerText" placeholder="답변 내용" rows="4">저는 3년간 백엔드 개발 경험이 있으며, Spring Boot와 MySQL을 주로 사용했습니다.</textarea>
+            <button onclick="submitAnswer()">답변 제출</button>
+            <div id="answerResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- 점수 조회 -->
+        <div class="section">
+            <h2>5. 점수 조회</h2>
+            <input type="text" id="scoreSessionId" placeholder="Session ID">
+            <button onclick="getScore()">점수 조회</button>
+            <div id="scoreResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- 랭킹 조회 -->
+        <div class="section">
+            <h2>6. 랭킹 조회</h2>
+            <input type="number" id="rankingJobId" placeholder="채용공고 ID" value="1">
+            <button onclick="getRankings()">랭킹 조회</button>
+            <div id="rankingResult" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = document.getElementById('apiBaseUrl');
+
+        function getBaseUrl() {
+            return API_BASE_URL.value || 'http://localhost:8000';
+        }
+
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'result ' + (isError ? 'error' : 'success');
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function createJobPosting() {
+            try {
+                const response = await fetch(`${getBaseUrl()}/api/v1/job-postings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        companyName: document.getElementById('companyName').value,
+                        jobTitle: document.getElementById('jobTitle').value,
+                        workLocation: document.getElementById('workLocation').value,
+                        recruitmentPeriod: '2024-01-01 ~ 2024-12-31',
+                        qualifications: document.getElementById('qualifications').value,
+                        idealCandidate: document.getElementById('idealCandidate').value,
+                        preferredQualifications: document.getElementById('preferredQualifications').value || null,
+                        jobDescription: document.getElementById('jobDescription').value
+                    })
+                });
+                const data = await response.json();
+                showResult('jobPostingResult', { status: response.status, data });
+                if (data.id) document.getElementById('jobId').value = data.id;
+            } catch (error) {
+                showResult('jobPostingResult', { error: error.message }, true);
+            }
+        }
+
+        async function createResume() {
+            try {
+                const response = await fetch(`${getBaseUrl()}/api/v1/resumes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: document.getElementById('resumeName').value,
+                        email: document.getElementById('resumeEmail').value,
+                        phone: document.getElementById('phone').value,
+                        address: '서울시 강남구',
+                        gender: 'MALE',
+                        birthYear: '1995',
+                        homePhone: '',
+                        academicRecord: {
+                            schoolName: '테스트 대학교',
+                            period: '2014-2018',
+                            status: 'GRADUATED',
+                            gpa: 3.5,
+                            major: document.getElementById('major').value
+                        },
+                        jobPreference: {
+                            desiredJob: document.getElementById('desiredJob').value,
+                            experienceLevel: 'MIDDLE',
+                            description: '백엔드 개발 경험 3년'
+                        },
+                        desiredRegion: '서울',
+                        desiredSalary: 50000000,
+                        workCondition: {
+                            employmentType: 'FULL_TIME',
+                            desiredHours: '09:00-18:00'
+                        }
+                    })
+                });
+                const data = await response.json();
+                showResult('resumeResult', { status: response.status, data });
+                if (data.email) document.getElementById('applicantEmail').value = data.email;
+            } catch (error) {
+                showResult('resumeResult', { error: error.message }, true);
+            }
+        }
+
+        async function startInterview() {
+            try {
+                const response = await fetch(`${getBaseUrl()}/interview/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jobId: parseInt(document.getElementById('jobId').value),
+                        applicantEmail: document.getElementById('applicantEmail').value
+                    })
+                });
+                const data = await response.json();
+                showResult('interviewStartResult', { status: response.status, data });
+                if (data.sessionId) {
+                    document.getElementById('sessionId').value = data.sessionId;
+                    document.getElementById('scoreSessionId').value = data.sessionId;
+                }
+            } catch (error) {
+                showResult('interviewStartResult', { error: error.message }, true);
+            }
+        }
+
+        async function submitAnswer() {
+            try {
+                const response = await fetch(`${getBaseUrl()}/interview/answer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: document.getElementById('sessionId').value,
+                        answerText: document.getElementById('answerText').value
+                    })
+                });
+                const data = await response.json();
+                showResult('answerResult', { status: response.status, data });
+            } catch (error) {
+                showResult('answerResult', { error: error.message }, true);
+            }
+        }
+
+        async function getScore() {
+            try {
+                const sessionId = document.getElementById('scoreSessionId').value;
+                const response = await fetch(`${getBaseUrl()}/interview/score?sessionId=${sessionId}`);
+                const data = await response.json();
+                showResult('scoreResult', { status: response.status, data });
+            } catch (error) {
+                showResult('scoreResult', { error: error.message }, true);
+            }
+        }
+
+        async function getRankings() {
+            try {
+                const jobId = document.getElementById('rankingJobId').value;
+                const response = await fetch(`${getBaseUrl()}/api/rankings/${jobId}`);
+                const data = await response.json();
+                showResult('rankingResult', { status: response.status, data });
+            } catch (error) {
+                showResult('rankingResult', { error: error.message }, true);
+            }
+        }
+    </script>
+</body>
+</html>
+

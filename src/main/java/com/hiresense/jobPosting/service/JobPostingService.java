@@ -1,5 +1,6 @@
 package com.hiresense.jobPosting.service;
 
+import com.hiresense.ai.service.QuestionGenerationService;
 import com.hiresense.global.error.exception.JobPostingNotFoundException;
 import com.hiresense.jobPosting.domain.JobPosting;
 import com.hiresense.jobPosting.dto.request.JobPostingRequest;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class JobPostingService {
     private final JobPostingRepository jobPostingRepository;
+    private final QuestionGenerationService questionGenerationService;
 
     @Transactional
     public JobPostingResponse create(JobPostingRequest request) {
@@ -26,6 +28,19 @@ public class JobPostingService {
         JobPosting jobPosting = JobPosting.createJobPosting(request);
         JobPosting savedJobPosting = jobPostingRepository.save(jobPosting);
         log.info("채용공고 생성이 완료되었습니다. id: {}", savedJobPosting.getId());
+        
+        // 채용공고 기반 질문 자동 생성 (비동기 처리)
+        questionGenerationService.generateJobPostingQuestions(savedJobPosting)
+                .thenAccept(questions -> {
+                    log.info("채용공고 질문 생성 완료: jobPostingId={}, 질문 수={}", 
+                            savedJobPosting.getId(), questions.size());
+                })
+                .exceptionally(ex -> {
+                    log.error("채용공고 질문 생성 중 오류 발생: jobPostingId={}, error={}", 
+                            savedJobPosting.getId(), ex.getMessage(), ex);
+                    return null;
+                });
+        
         return JobPostingResponse.from(savedJobPosting);
     }
 

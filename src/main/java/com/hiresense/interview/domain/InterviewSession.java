@@ -24,6 +24,34 @@ public class InterviewSession extends BaseTimeEntity {
     @JoinColumn(name = "resume_id")
     private Resume resume;
 
+    @Column(nullable = false)
+    private String applicantEmail;
+
     @Enumerated(EnumType.STRING)
     private InterviewStatus status;
+
+    @Column(nullable = false)
+    private Integer currentIndex = 0;
+
+    public static InterviewSession create(JobPosting jobPosting, Resume resume, String applicantEmail) {
+        InterviewSession session = new InterviewSession();
+        session.jobPosting = jobPosting;
+        session.resume = resume;
+        session.applicantEmail = applicantEmail;
+        session.status = InterviewStatus.IN_PROGRESS;
+        session.currentIndex = 0;
+        return session;
+    }
+
+    public void incrementCurrentIndex() {
+        this.currentIndex++;
+    }
+
+    public void complete() {
+        this.status = InterviewStatus.COMPLETED;
+    }
+
+    public void setStatus(InterviewStatus status) {
+        this.status = status;
+    }
 }

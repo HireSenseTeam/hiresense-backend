@@ -29,4 +29,24 @@ public class InterviewAnswer extends BaseTimeEntity {
 
     private BigDecimal score;
     private String feedback;
+
+    public void setSession(InterviewSession session) {
+        this.session = session;
+    }
+
+    public void setQuestion(Question question) {
+        this.question = question;
+    }
+
+    public void setAnswerText(String answerText) {
+        this.answerText = answerText;
+    }
+
+    public static InterviewAnswer create(InterviewSession session, Question question, String answerText) {
+        InterviewAnswer answer = new InterviewAnswer();
+        answer.setSession(session);
+        answer.setQuestion(question);
+        answer.setAnswerText(answerText);
+        return answer;
+    }
 }
