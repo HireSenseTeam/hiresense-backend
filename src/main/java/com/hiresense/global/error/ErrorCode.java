@@ -19,7 +19,10 @@ public enum ErrorCode {
     RESUME_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "이력서를 찾을 수 없습니다"),
 
     // 채용공고
-    JOB_POSTING_NOT_FOUND(HttpStatus.NOT_FOUND, "J001", "채용공고를 찾을 수 없습니다");
+    JOB_POSTING_NOT_FOUND(HttpStatus.NOT_FOUND, "J001", "채용공고를 찾을 수 없습니다"),
+
+    // 면접
+    SCORING_IN_PROGRESS(HttpStatus.ACCEPTED, "I001", "채점이 아직 진행 중입니다. 잠시 후 다시 시도해주세요.");
 
     private final HttpStatus status;
     private final String code;
