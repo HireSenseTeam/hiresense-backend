@@ -6,21 +6,21 @@ spring:
   profiles:
     active: dev
 
-  datasource:
-    url: jdbc:mysql://linkbig-ht-20.czwmu86ms4yl.us-east-1.rds.amazonaws.com:3306/hiresense?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: admin
-    password: ${DB_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update # In production, use 'validate' or 'none'
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-
 cloud:
   aws:
-    s3:
-      bucket: linkbig-ht-20-ai-interview-storage
+    region:
+      static: us-east-1
+
+
+
+# Bedrock 모델 ID
+bedrock:
+  model-id: "anthropic.claude-3-sonnet-20240229-v1:0"
+  region: "us-east-1"
+  guardrail-identifier: "gi0pmpvfbz8t"
+
+# JWT 설정
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 3600000  # 1 hour (access token)
+  refresh-expiration: 604800000  # 7 days (refresh token)
