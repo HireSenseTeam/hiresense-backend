@@ -22,4 +22,5 @@ bedrock:
 # JWT 설정
 jwt:
   secret: ${JWT_SECRET}
-  expiration: 86400000  # 24 hours
+  expiration: 3600000  # 1 hour (access token)
+  refresh-expiration: 604800000  # 7 days (refresh token)
