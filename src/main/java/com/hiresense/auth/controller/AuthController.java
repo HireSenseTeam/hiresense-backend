@@ -1,10 +1,13 @@
 package com.hiresense.auth.controller;
 
+import com.hiresense.auth.config.CurrentUser;
 import com.hiresense.auth.dto.request.LoginRequest;
 import com.hiresense.auth.dto.request.RefreshTokenRequest;
 import com.hiresense.auth.dto.request.SignUpRequest;
 import com.hiresense.auth.dto.response.AuthResponse;
 import com.hiresense.auth.service.AuthService;
+import com.hiresense.user.domain.User;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -36,10 +39,14 @@ public class AuthController implements AuthApiDocs {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@RequestHeader("Authorization") String authorization) {
-        String token = authorization.replace("Bearer ", "");
-        Long userId = authService.getUserIdFromToken(token);
-        authService.logout(userId);
+    public ResponseEntity<Void> logout(@CurrentUser User user, HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        String accessToken = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            accessToken = authHeader.substring(7);
+        }
+        
+        authService.logout(user.getId(), accessToken);
         return ResponseEntity.ok().build();
     }
 }

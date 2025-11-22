@@ -24,6 +24,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Transactional
     public AuthResponse signUp(SignUpRequest request) {
@@ -54,14 +55,31 @@ public class AuthService {
     public AuthResponse refreshToken(RefreshTokenRequest request) {
         User user = refreshTokenService.validateAndGetUserFromToken(request.refreshToken());
 
+        refreshTokenService.deleteRefreshToken(user.getId());
+
         log.info("토큰 재발급 완료: userId={}, email={}, role={}", user.getId(), user.getEmail(), user.getRole());
 
         return createAuthResponse(user);
     }
 
     @Transactional
-    public void logout(Long userId) {
+    public void logout(Long userId, String accessToken) {
         refreshTokenService.deleteRefreshToken(userId);
+        
+        if (accessToken != null && !accessToken.isEmpty()) {
+            try {
+                long expirationTime = jwtService.extractExpiration(accessToken).getTime();
+                long remainingTime = expirationTime - System.currentTimeMillis();
+                
+                if (remainingTime > 0) {
+                    tokenBlacklistService.addToBlacklist(accessToken, remainingTime);
+                    log.info("Access Token 블랙리스트 추가 완료: userId={}, remainingTime={}ms", userId, remainingTime);
+                }
+            } catch (Exception e) {
+                log.warn("Access Token 블랙리스트 추가 실패 (토큰 파싱 오류): userId={}, error={}", userId, e.getMessage());
+            }
+        }
+        
         log.info("로그아웃 완료: userId={}", userId);
     }
 

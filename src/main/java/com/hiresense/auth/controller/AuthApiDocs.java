@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 @Tag(name = "Auth", description = "인증/인가 API")
 public interface AuthApiDocs {
@@ -45,11 +44,11 @@ public interface AuthApiDocs {
     })
     ResponseEntity<AuthResponse> refreshToken(@RequestBody RefreshTokenRequest request);
 
-    @Operation(summary = "로그아웃", description = "Refresh Token을 삭제하여 로그아웃합니다.")
+    @Operation(summary = "로그아웃", description = "Refresh Token을 삭제하고 Access Token을 블랙리스트에 추가하여 로그아웃합니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
-        @ApiResponse(responseCode = "400", description = "잘못된 요청 (유효하지 않은 토큰)",
+        @ApiResponse(responseCode = "401", description = "인증 실패 (유효하지 않은 토큰)",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    ResponseEntity<Void> logout(@RequestHeader("Authorization") String authorization);
+    ResponseEntity<Void> logout(com.hiresense.user.domain.User user, jakarta.servlet.http.HttpServletRequest request);
 }
