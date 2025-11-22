@@ -1,6 +1,7 @@
 package com.hiresense.user.domain;
 
 import com.hiresense.global.entity.BaseTimeEntity;
+import com.hiresense.global.error.BusinessException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -57,5 +58,11 @@ public class User extends BaseTimeEntity {
                 .name(name)
                 .role(UserRole.COMPANY)
                 .build();
+    }
+
+    public void validatePassword(String rawPassword, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
+        if (!passwordEncoder.matches(rawPassword, this.password)) {
+            throw new BusinessException(com.hiresense.global.error.ErrorCode.AUTH_INVALID_CREDENTIALS);
+        }
     }
 }
