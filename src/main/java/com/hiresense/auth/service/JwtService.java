@@ -83,6 +83,15 @@ public class JwtService {
         return (tokenEmail.equals(email) && !isTokenExpired(token));
     }
 
+    public String extractUsername(String token) {
+        return extractEmail(token);
+    }
+
+    public Boolean isTokenValid(String token, org.springframework.security.core.userdetails.UserDetails userDetails) {
+        final String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
     private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
                 .claims(claims)
