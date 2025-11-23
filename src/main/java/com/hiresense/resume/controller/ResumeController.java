@@ -1,5 +1,7 @@
 package com.hiresense.resume.controller;
 
+import com.hiresense.question.dto.response.QuestionResponse;
+import com.hiresense.question.service.QuestionService;
 import com.hiresense.resume.dto.request.ResumeRequest;
 import com.hiresense.resume.dto.request.ResumeUpdateRequest;
 import com.hiresense.resume.dto.response.ResumeResponse;
@@ -18,6 +20,7 @@ import java.util.List;
 public class ResumeController implements ResumeApiDocs {
 
     private final ResumeService resumeService;
+    private final QuestionService questionService;
 
     @PostMapping
     public ResponseEntity<ResumeResponse> createResume(@Valid @RequestBody ResumeRequest request) {
@@ -48,5 +51,17 @@ public class ResumeController implements ResumeApiDocs {
     public ResponseEntity<Void> deleteResume(@PathVariable Long id) {
         resumeService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/email/{email}")
+    public ResponseEntity<ResumeResponse> getResumeByEmail(@PathVariable String email) {
+        ResumeResponse response = resumeService.findByEmail(email);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/questions")
+    public ResponseEntity<List<QuestionResponse>> getQuestions(@PathVariable Long id) {
+        List<QuestionResponse> responses = questionService.findByResumeId(id);
+        return ResponseEntity.ok(responses);
     }
 }

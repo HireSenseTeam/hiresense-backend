@@ -65,4 +65,12 @@ public class ResumeService {
         resumeRepository.delete(resume);
         log.info("ID {} 이력서 삭제가 완료되었습니다.", id);
     }
+
+    public ResumeResponse findByEmail(String email) {
+        log.info("이메일로 이력서 조회: email={}", email);
+        Resume resume = resumeRepository.findByEmail(email)
+            .orElseThrow(ResumeNotFoundException::new);
+        log.info("이메일로 이력서 조회 완료: email={}, id={}", email, resume.getId());
+        return ResumeResponse.from(resume);
+    }
 }
