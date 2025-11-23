@@ -24,13 +24,7 @@ public class QuestionService {
         log.info("질문 타입별 조회: type={}", type);
         List<Question> questions = questionRepository.findByType(type);
         return questions.stream()
-                .map(q -> new QuestionResponse(
-                        q.getId(),
-                        q.getText(),
-                        q.getType(),
-                        q.getJobPosting() != null ? q.getJobPosting().getId() : null,
-                        q.getResume() != null ? q.getResume().getId() : null
-                ))
+                .map(QuestionResponse::from)
                 .collect(Collectors.toList());
     }
 
@@ -38,13 +32,7 @@ public class QuestionService {
         log.info("채용공고별 질문 조회: jobPostingId={}", jobPostingId);
         List<Question> questions = questionRepository.findByJobPostingId(jobPostingId);
         return questions.stream()
-                .map(q -> new QuestionResponse(
-                        q.getId(),
-                        q.getText(),
-                        q.getType(),
-                        q.getJobPosting() != null ? q.getJobPosting().getId() : null,
-                        q.getResume() != null ? q.getResume().getId() : null
-                ))
+                .map(QuestionResponse::from)
                 .collect(Collectors.toList());
     }
 
@@ -52,13 +40,7 @@ public class QuestionService {
         log.info("이력서별 질문 조회: resumeId={}", resumeId);
         List<Question> questions = questionRepository.findByResumeId(resumeId);
         return questions.stream()
-                .map(q -> new QuestionResponse(
-                        q.getId(),
-                        q.getText(),
-                        q.getType(),
-                        q.getJobPosting() != null ? q.getJobPosting().getId() : null,
-                        q.getResume() != null ? q.getResume().getId() : null
-                ))
+                .map(QuestionResponse::from)
                 .collect(Collectors.toList());
     }
 }
