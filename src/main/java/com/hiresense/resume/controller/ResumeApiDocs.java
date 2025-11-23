@@ -59,4 +59,13 @@ public interface ResumeApiDocs {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     ResponseEntity<Void> deleteResume(@PathVariable Long id);
+
+    @Operation(summary = "이메일로 이력서 조회", description = "이메일을 사용하여 이력서를 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "이력서 조회 성공",
+            content = @Content(schema = @Schema(implementation = ResumeResponse.class))),
+        @ApiResponse(responseCode = "404", description = "이력서를 찾을 수 없음",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    ResponseEntity<ResumeResponse> getResumeByEmail(@PathVariable String email);
 }

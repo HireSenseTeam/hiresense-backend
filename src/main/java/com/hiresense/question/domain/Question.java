@@ -19,6 +19,8 @@ public class Question {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
+    @Column(nullable = false, length = 1000)
     private String text;
 
     @Enumerated(EnumType.STRING)
