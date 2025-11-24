@@ -59,4 +59,13 @@ public interface JobPostingApiDocs {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     ResponseEntity<Void> deleteJobPosting(@PathVariable Long id);
+
+    @Operation(summary = "채용 공고 질문 조회", description = "특정 채용 공고에 대한 면접 질문 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "질문 목록 조회 성공",
+                    content = @Content(schema = @Schema(implementation = List.class))),
+            @ApiResponse(responseCode = "404", description = "채용 공고를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    ResponseEntity<List<com.hiresense.question.dto.response.QuestionResponse>> getQuestions(@PathVariable Long id);
 }
