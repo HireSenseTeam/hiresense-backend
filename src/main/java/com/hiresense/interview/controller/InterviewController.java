@@ -4,6 +4,7 @@ import com.hiresense.interview.dto.request.InterviewAnswerRequest;
 import com.hiresense.interview.dto.request.InterviewStartRequest;
 import com.hiresense.interview.dto.response.InterviewAnswerDetailResponse;
 import com.hiresense.interview.dto.response.InterviewAnswerResponse;
+import com.hiresense.interview.dto.response.InterviewScoreResponse;
 import com.hiresense.interview.dto.response.InterviewSessionResponse;
 import com.hiresense.interview.dto.response.InterviewStartResponse;
 import com.hiresense.interview.service.InterviewService;
@@ -18,7 +19,6 @@ import java.util.List;
 @RequestMapping("/interview")
 @RequiredArgsConstructor
 public class InterviewController implements InterviewApiDocs {
-
     private final InterviewService interviewService;
 
     @PostMapping("/start")
@@ -30,6 +30,11 @@ public class InterviewController implements InterviewApiDocs {
     @PostMapping("/answer")
     public ResponseEntity<InterviewAnswerResponse> handleAnswer(@Valid @RequestBody InterviewAnswerRequest request) {
         InterviewAnswerResponse response = interviewService.handleAnswer(request);
+        return ResponseEntity.ok(response);
+    }
+    @GetMapping("/score")
+    public ResponseEntity<InterviewScoreResponse> getScore(@RequestParam String sessionId) {
+        InterviewScoreResponse response = interviewService.getScore(sessionId);
         return ResponseEntity.ok(response);
     }
 

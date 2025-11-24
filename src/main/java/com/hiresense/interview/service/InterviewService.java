@@ -6,17 +6,20 @@ import com.hiresense.global.error.BusinessException;
 import com.hiresense.global.error.ErrorCode;
 import com.hiresense.interview.domain.InterviewAnswer;
 import com.hiresense.interview.domain.InterviewQuestion;
+import com.hiresense.interview.domain.InterviewScore;
 import com.hiresense.interview.domain.InterviewSession;
 import com.hiresense.interview.domain.InterviewStatus;
 import com.hiresense.interview.dto.request.InterviewAnswerRequest;
 import com.hiresense.interview.dto.request.InterviewStartRequest;
 import com.hiresense.interview.dto.response.InterviewAnswerDetailResponse;
 import com.hiresense.interview.dto.response.InterviewAnswerResponse;
+import com.hiresense.interview.dto.response.InterviewScoreResponse;
 import com.hiresense.interview.dto.response.InterviewSessionResponse;
 import com.hiresense.interview.dto.response.InterviewStartResponse;
 import com.hiresense.interview.repository.InterviewAnswerRepository;
 import com.hiresense.interview.repository.InterviewQuestionRepository;
 import com.hiresense.interview.repository.InterviewSessionRepository;
+import com.hiresense.interview.repository.InterviewScoreRepository;
 import com.hiresense.jobPosting.domain.JobPosting;
 import com.hiresense.jobPosting.repository.JobPostingRepository;
 import com.hiresense.question.domain.Question;
@@ -43,6 +46,7 @@ public class InterviewService {
     private final InterviewSessionRepository interviewSessionRepository;
     private final InterviewQuestionRepository interviewQuestionRepository;
     private final InterviewAnswerRepository interviewAnswerRepository;
+    private final InterviewScoreRepository interviewScoreRepository;
     private final JobPostingRepository jobPostingRepository;
     private final ResumeRepository resumeRepository;
     private final QuestionRepository questionRepository;
@@ -143,7 +147,26 @@ public class InterviewService {
             interviewSessionRepository.save(session);
             log.info("면접 종료: sessionId={}", session.getId());
 
-            interviewScoringService.scoreInterview(session, session.getJobPosting().getId());
+            interviewScoringService.scoreInterview(session, session.getJobPosting().getId())
+                    .thenRun(() -> {
+                        InterviewSession updatedSession = interviewSessionRepository.findWithDetailsById(session.getId())
+                                .orElse(null);
+                        if (updatedSession != null) {
+                            updatedSession.markAsScored();
+                            interviewSessionRepository.save(updatedSession);
+                            log.info("면접 채점 완료: sessionId={}", session.getId());
+                        }
+                    })
+                    .exceptionally(ex -> {
+                        log.error("면접 채점 중 오류 발생: sessionId={}, error={}", session.getId(), ex.getMessage(), ex);
+                        InterviewSession updatedSession = interviewSessionRepository.findWithDetailsById(session.getId())
+                                .orElse(null);
+                        if (updatedSession != null) {
+                            updatedSession.markAsError();
+                            interviewSessionRepository.save(updatedSession);
+                        }
+                        return null;
+                    });
 
             return InterviewAnswerResponse.withMessage("면접이 종료되었습니다. 수고하셨습니다.");
         }
@@ -157,6 +180,26 @@ public class InterviewService {
         );
 
         return InterviewAnswerResponse.withQuestion(responseText);
+    }
+
+    public InterviewScoreResponse getScore(String sessionId) {
+        log.info("점수 조회 요청: sessionId={}", sessionId);
+
+        if (!interviewSessionRepository.existsById(sessionId)) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "유효하지 않은 session_id입니다.");
+        }
+
+        InterviewScore score = interviewScoreRepository.findBySessionId(sessionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SCORING_IN_PROGRESS));
+
+        return new InterviewScoreResponse(
+                score.getOverallScore(),
+                score.getOverallComment(),
+                score.getStrengths(),
+                score.getWeaknesses(),
+                score.getIdealCandidateFit(),
+                score.getJobDescriptionFit()
+        );
     }
 
     public InterviewSessionResponse getSession(String sessionId) {

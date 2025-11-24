@@ -3,10 +3,7 @@ package com.hiresense.interview.controller;
 import com.hiresense.global.error.ErrorResponse;
 import com.hiresense.interview.dto.request.InterviewAnswerRequest;
 import com.hiresense.interview.dto.request.InterviewStartRequest;
-import com.hiresense.interview.dto.response.InterviewAnswerDetailResponse;
-import com.hiresense.interview.dto.response.InterviewAnswerResponse;
-import com.hiresense.interview.dto.response.InterviewSessionResponse;
-import com.hiresense.interview.dto.response.InterviewStartResponse;
+import com.hiresense.interview.dto.response.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -45,7 +42,19 @@ public interface InterviewApiDocs {
     })
     ResponseEntity<InterviewAnswerResponse> handleAnswer(@RequestBody InterviewAnswerRequest request);
 
-    // @Operation(summary = "면접 점수 조회", ... ) 메서드 제거됨
+
+
+    @Operation(summary = "면접 점수 조회", description = "면접 세션의 채점 결과를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "점수 조회 성공",
+                    content = @Content(schema = @Schema(implementation = InterviewScoreResponse.class))),
+            @ApiResponse(responseCode = "202", description = "채점이 아직 진행 중입니다",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "면접 세션 또는 점수를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+
+    })
+    ResponseEntity<InterviewScoreResponse> getScore(@RequestParam String sessionId);
 
     @Operation(summary = "면접 세션 조회", description = "면접 세션의 상세 정보를 조회합니다.")
     @ApiResponses(value = {
