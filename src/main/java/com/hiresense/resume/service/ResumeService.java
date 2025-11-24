@@ -1,5 +1,6 @@
 package com.hiresense.resume.service;
 
+import com.hiresense.ai.service.QuestionGenerationService;
 import com.hiresense.global.error.exception.ResumeNotFoundException;
 import com.hiresense.resume.domain.Resume;
 import com.hiresense.resume.dto.request.ResumeRequest;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class ResumeService {
 
     private final ResumeRepository resumeRepository;
+    private final QuestionGenerationService questionGenerationService;
 
     @Transactional
     public ResumeResponse create(ResumeRequest request) {
@@ -28,6 +30,18 @@ public class ResumeService {
         Resume resume = Resume.createFrom(request);
         Resume savedResume = resumeRepository.save(resume);
         log.info("이력서 생성이 완료되었습니다. id: {}", savedResume.getId());
+        
+        questionGenerationService.generateResumeQuestions(savedResume)
+                .thenAccept(questions -> {
+                    log.info("이력서 질문 생성 완료: resumeId={}, 질문 수={}", 
+                            savedResume.getId(), questions.size());
+                })
+                .exceptionally(ex -> {
+                    log.error("이력서 질문 생성 중 오류 발생: resumeId={}, error={}", 
+                            savedResume.getId(), ex.getMessage(), ex);
+                    return null;
+                });
+        
         return ResumeResponse.from(savedResume);
     }
 
