@@ -20,8 +20,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     protected ResponseEntity<ErrorResponse> handleBusinessException(final BusinessException e) {
-        log.error("handleBusinessException", e);
         final ErrorCode errorCode = e.getErrorCode();
+        
+        if (errorCode == ErrorCode.SCORING_IN_PROGRESS) {
+            log.info("채점 진행 중: {}", e.getMessage());
+        } else {
+            log.error("handleBusinessException", e);
+        }
+        
         final ErrorResponse response = ErrorResponse.of(errorCode);
         return new ResponseEntity<>(response, HttpStatus.valueOf(errorCode.getStatus().value()));
     }
