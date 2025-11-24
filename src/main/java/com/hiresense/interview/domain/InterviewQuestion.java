@@ -23,4 +23,12 @@ public class InterviewQuestion {
     private Question question;
 
     private int questionOrder;
+
+    public static InterviewQuestion create(InterviewSession session, Question question, int order) {
+        InterviewQuestion interviewQuestion = new InterviewQuestion();
+        interviewQuestion.interviewSession = session;
+        interviewQuestion.question = question;
+        interviewQuestion.questionOrder = order;
+        return interviewQuestion;
+    }
 }
