@@ -4,6 +4,8 @@ import com.hiresense.jobPosting.dto.request.JobPostingRequest;
 import com.hiresense.jobPosting.dto.request.JobPostingUpdateRequest;
 import com.hiresense.jobPosting.dto.response.JobPostingResponse;
 import com.hiresense.jobPosting.service.JobPostingService;
+import com.hiresense.question.dto.response.QuestionResponse;
+import com.hiresense.question.service.QuestionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,7 @@ import java.util.List;
 public class JobPostingController implements JobPostingApiDocs {
 
     private final JobPostingService jobPostingService;
+    private final QuestionService questionService;
 
     @PostMapping
     public ResponseEntity<JobPostingResponse> createJobPosting(@Valid @RequestBody JobPostingRequest request) {
@@ -48,5 +51,11 @@ public class JobPostingController implements JobPostingApiDocs {
     public ResponseEntity<Void> deleteJobPosting(@PathVariable Long id) {
         jobPostingService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/questions")
+    public ResponseEntity<List<QuestionResponse>> getQuestions(@PathVariable Long id) {
+        List<QuestionResponse> responses = questionService.findByJobPostingId(id);
+        return ResponseEntity.ok(responses);
     }
 }

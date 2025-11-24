@@ -15,7 +15,6 @@ public record JobPostingRequest(
     String qualifications,
     @NotBlank(message = "인재상은 필수 입력값입니다.")
     String idealCandidate,
-    @NotBlank(message = "우대사항은 필수 입력값입니다.")
     String preferredQualifications,
     @NotBlank(message = "주요 업무는 필수 입력값입니다.")
     String jobDescription
