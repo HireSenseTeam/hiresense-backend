@@ -18,15 +18,24 @@ public class InterviewAnswer extends BaseTimeEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "session_id")
+    @JoinColumn(name = "session_id", nullable = false)
     private InterviewSession session;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
+    @JoinColumn(name = "question_id", nullable = false)
     private Question question;
 
+    @Column(nullable = false, length = 2000)
     private String answerText;
 
     private BigDecimal score;
     private String feedback;
+
+    public static InterviewAnswer create(InterviewSession session, Question question, String answerText) {
+        InterviewAnswer answer = new InterviewAnswer();
+        answer.session = session;
+        answer.question = question;
+        answer.answerText = answerText;
+        return answer;
+    }
 }
