@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
 @Getter
@@ -60,7 +61,7 @@ public class User extends BaseTimeEntity {
                 .build();
     }
 
-    public void validatePassword(String rawPassword, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
+    public void validatePassword(String rawPassword, PasswordEncoder passwordEncoder) {
         if (!passwordEncoder.matches(rawPassword, this.password)) {
             throw new BusinessException(com.hiresense.global.error.ErrorCode.AUTH_INVALID_CREDENTIALS);
         }

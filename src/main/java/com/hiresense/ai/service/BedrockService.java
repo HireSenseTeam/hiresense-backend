@@ -50,11 +50,11 @@ public class BedrockService {
             ContentBlock contentBlock = new ContentBlock(CONTENT_TYPE_TEXT, prompt);
             Message message = new Message(USER_ROLE, Collections.singletonList(contentBlock));
 
-            AnthropicInvokeModelRequest bedrockRequest = AnthropicInvokeModelRequest.builder()
-                    .anthropicVersion(ANTHROPIC_VERSION)
-                    .maxTokens(MAX_TOKENS)
-                    .messages(Collections.singletonList(message))
-                    .build();
+            AnthropicInvokeModelRequest bedrockRequest = new AnthropicInvokeModelRequest(
+                    ANTHROPIC_VERSION,
+                    MAX_TOKENS,
+                    Collections.singletonList(message)
+            );
 
             String bodyJson = objectMapper.writeValueAsString(bedrockRequest);
 

@@ -73,11 +73,11 @@ public class QuestionGenerationService {
             ContentBlock contentBlock = new ContentBlock(CONTENT_TYPE_TEXT, prompt);
             Message message = new Message(USER_ROLE, Collections.singletonList(contentBlock));
 
-            AnthropicInvokeModelRequest bedrockRequest = AnthropicInvokeModelRequest.builder()
-                    .anthropicVersion(ANTHROPIC_VERSION)
-                    .maxTokens(MAX_TOKENS_JOB_POSTING)
-                    .messages(Collections.singletonList(message))
-                    .build();
+            AnthropicInvokeModelRequest bedrockRequest = new AnthropicInvokeModelRequest(
+                    ANTHROPIC_VERSION,
+                    MAX_TOKENS_JOB_POSTING,
+                    Collections.singletonList(message)
+            );
 
             String bodyJson = objectMapper.writeValueAsString(bedrockRequest);
 
@@ -153,11 +153,11 @@ public class QuestionGenerationService {
             ContentBlock contentBlock = new ContentBlock(CONTENT_TYPE_TEXT, prompt);
             Message message = new Message(USER_ROLE, Collections.singletonList(contentBlock));
 
-            AnthropicInvokeModelRequest bedrockRequest = AnthropicInvokeModelRequest.builder()
-                    .anthropicVersion(ANTHROPIC_VERSION)
-                    .maxTokens(MAX_TOKENS_RESUME)
-                    .messages(Collections.singletonList(message))
-                    .build();
+            AnthropicInvokeModelRequest bedrockRequest = new AnthropicInvokeModelRequest(
+                    ANTHROPIC_VERSION,
+                    MAX_TOKENS_RESUME,
+                    Collections.singletonList(message)
+            );
 
             String bodyJson = objectMapper.writeValueAsString(bedrockRequest);
 

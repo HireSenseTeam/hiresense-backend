@@ -1,20 +1,16 @@
 package com.hiresense.ai.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
-import lombok.Getter;
 
 import java.util.List;
 
-@Getter
-@Builder
-public class AnthropicInvokeModelRequest {
+public record AnthropicInvokeModelRequest(
+        @JsonProperty("anthropic_version")
+        String anthropicVersion,
 
-    @JsonProperty("anthropic_version")
-    private String anthropicVersion;
+        @JsonProperty("max_tokens")
+        int maxTokens,
 
-    @JsonProperty("max_tokens")
-    private int maxTokens;
-
-    private List<Message> messages;
+        List<Message> messages
+) {
 }

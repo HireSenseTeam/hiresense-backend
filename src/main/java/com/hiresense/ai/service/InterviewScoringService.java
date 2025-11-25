@@ -108,11 +108,11 @@ public class InterviewScoringService {
             ContentBlock contentBlock = new ContentBlock(CONTENT_TYPE_TEXT, prompt);
             Message message = new Message(USER_ROLE, Collections.singletonList(contentBlock));
 
-            AnthropicInvokeModelRequest bedrockRequest = AnthropicInvokeModelRequest.builder()
-                    .anthropicVersion(ANTHROPIC_VERSION)
-                    .maxTokens(MAX_TOKENS_SCORING)
-                    .messages(Collections.singletonList(message))
-                    .build();
+            AnthropicInvokeModelRequest bedrockRequest = new AnthropicInvokeModelRequest(
+                    ANTHROPIC_VERSION,
+                    MAX_TOKENS_SCORING,
+                    Collections.singletonList(message)
+            );
 
             String bodyJson = objectMapper.writeValueAsString(bedrockRequest);
 
