@@ -102,7 +102,7 @@ public class InterviewScoringService {
 
         String prompt = String.format(promptProperties.getScoring(), criteriaText, answersFormattedText);
 
-        Map<String, Object> finalReport = null;
+        Map<String, Object> finalReport;
 
         try {
             ContentBlock contentBlock = new ContentBlock(CONTENT_TYPE_TEXT, prompt);
@@ -123,7 +123,34 @@ public class InterviewScoringService {
                     .accept("application/json")
                     .build();
 
-            InvokeModelResponse response = bedrockRuntimeClient.invokeModel(request);
+            int maxRetries = 3;
+            long initialDelay = 2000;
+            InvokeModelResponse response = null;
+
+            for (int attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    response = bedrockRuntimeClient.invokeModel(request);
+                    break;
+                } catch (software.amazon.awssdk.services.bedrockruntime.model.ThrottlingException e) {
+                    if (attempt >= maxRetries - 1) {
+                        log.error("[InterviewScoringService] Bedrock 채점 실패 (최대 재시도 도달): {}", e.getMessage());
+                        throw e;
+                    }
+                    long delay = initialDelay * (long) Math.pow(2, attempt);
+                    log.warn("[InterviewScoringService] Bedrock API Throttling. {}ms 후 재시도... (시도 {}/{})", delay, attempt + 2, maxRetries);
+                    try {
+                        Thread.sleep(delay);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new BusinessException(ErrorCode.SCORING_FAILED, "재시도 중 스레드 인터럽트 발생");
+                    }
+                }
+            }
+
+            if (response == null) {
+                throw new BusinessException(ErrorCode.SCORING_FAILED, "Bedrock으로부터 응답을 받지 못했습니다.");
+            }
+
             String responseBody = response.body().asString(StandardCharsets.UTF_8);
             String scoringResultText = responseParser.extractTextFromResponse(responseBody);
             finalReport = responseParser.parseJsonFromResponse(scoringResultText);
