@@ -64,4 +64,10 @@ public class InterviewController implements InterviewApiDocs {
         }
         return ResponseEntity.ok(responses);
     }
+
+    @DeleteMapping("/session/{sessionId}")
+    public ResponseEntity<Void> deleteSession(@PathVariable String sessionId) {
+        interviewService.deleteSession(sessionId);
+        return ResponseEntity.noContent().build();
+    }
 }
