@@ -261,6 +261,30 @@ public class InterviewService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public void deleteSession(String sessionId) {
+        log.info("면접 세션 삭제 요청: sessionId={}", sessionId);
+
+        InterviewSession session = interviewSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "유효하지 않은 session_id입니다."));
+
+        List<InterviewAnswer> answers = interviewAnswerRepository.findBySessionId(sessionId);
+        if (!answers.isEmpty()) {
+            interviewAnswerRepository.deleteAll(answers);
+        }
+        
+        List<InterviewQuestion> questions = interviewQuestionRepository.findByInterviewSessionIdOrderByQuestionOrder(sessionId);
+        if (!questions.isEmpty()) {
+            interviewQuestionRepository.deleteAll(questions);
+        }
+        
+        interviewScoreRepository.findBySessionId(sessionId).ifPresent(interviewScoreRepository::delete);
+        
+        interviewSessionRepository.delete(session);
+        
+        log.info("면접 세션 삭제 완료: sessionId={}", sessionId);
+    }
+
     private InterviewSessionResponse toInterviewSessionResponse(InterviewSession session, int totalQuestions) {
         return new InterviewSessionResponse(
                 session.getId(),

@@ -84,4 +84,12 @@ public interface InterviewApiDocs {
     ResponseEntity<List<InterviewSessionResponse>> getSessions(
             @RequestParam(required = false) String applicantEmail,
             @RequestParam(required = false) Long jobPostingId);
+
+    @Operation(summary = "면접 세션 삭제", description = "면접 세션과 관련된 모든 데이터를 삭제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "면접 세션 삭제 성공"),
+            @ApiResponse(responseCode = "404", description = "면접 세션을 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    ResponseEntity<Void> deleteSession(@PathVariable String sessionId);
 }
