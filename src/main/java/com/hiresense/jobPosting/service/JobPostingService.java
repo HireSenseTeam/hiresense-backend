@@ -1,5 +1,10 @@
 package com.hiresense.jobPosting.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import com.hiresense.user.domain.User;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.hiresense.ai.service.QuestionGenerationService;
 import com.hiresense.global.error.exception.JobPostingNotFoundException;
 import com.hiresense.jobPosting.domain.JobPosting;
@@ -9,10 +14,6 @@ import com.hiresense.jobPosting.dto.response.JobPostingResponse;
 import com.hiresense.jobPosting.repository.JobPostingRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -23,9 +24,9 @@ public class JobPostingService {
     private final QuestionGenerationService questionGenerationService;
 
     @Transactional
-    public JobPostingResponse create(JobPostingRequest request) {
-        log.info("채용공고 생성을 시작합니다. companyName: {}", request.companyName());
-        JobPosting jobPosting = JobPosting.createJobPosting(request);
+    public JobPostingResponse create(JobPostingRequest request, User user) {
+        log.info("채용공고 생성을 시작합니다. companyName: {}, userId: {}", request.companyName(), user.getId());
+        JobPosting jobPosting = JobPosting.createJobPosting(request, user);
         JobPosting savedJobPosting = jobPostingRepository.save(jobPosting);
         log.info("채용공고 생성이 완료되었습니다. id: {}", savedJobPosting.getId());
         
@@ -55,6 +56,15 @@ public class JobPostingService {
         log.info("모든 채용공고 조회를 시작합니다.");
         List<JobPosting> jobPostings = jobPostingRepository.findAll();
         log.info("총 {}개의 채용공고 조회가 완료되었습니다.", jobPostings.size());
+        return jobPostings.stream()
+                .map(JobPostingResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    public List<JobPostingResponse> findByUser(User user) {
+        log.info("사용자별 채용공고 조회를 시작합니다. userId: {}", user.getId());
+        List<JobPosting> jobPostings = jobPostingRepository.findByUser(user);
+        log.info("사용자 {}의 채용공고 {}개 조회가 완료되었습니다.", user.getId(), jobPostings.size());
         return jobPostings.stream()
                 .map(JobPostingResponse::from)
                 .collect(Collectors.toList());
