@@ -1,20 +1,21 @@
 package com.hiresense.jobPosting.controller;
 
+import java.util.List;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import com.hiresense.auth.config.CurrentUser;
 import com.hiresense.global.error.ErrorResponse;
 import com.hiresense.jobPosting.dto.request.JobPostingRequest;
 import com.hiresense.jobPosting.dto.request.JobPostingUpdateRequest;
 import com.hiresense.jobPosting.dto.response.JobPostingResponse;
+import com.hiresense.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-
-import java.util.List;
 
 @Tag(name = "JobPosting", description = "채용 공고 API")
 public interface JobPostingApiDocs {
@@ -24,9 +25,11 @@ public interface JobPostingApiDocs {
             @ApiResponse(responseCode = "201", description = "채용 공고 생성 성공",
                     content = @Content(schema = @Schema(implementation = JobPostingResponse.class))),
             @ApiResponse(responseCode = "400", description = "잘못된 요청",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    ResponseEntity<JobPostingResponse> createJobPosting(@RequestBody JobPostingRequest request);
+    ResponseEntity<JobPostingResponse> createJobPosting(@RequestBody JobPostingRequest request, @CurrentUser User user);
 
     @Operation(summary = "채용 공고 전체 조회", description = "모든 채용 공고를 조회합니다.")
     @ApiResponses(value = {
@@ -34,6 +37,15 @@ public interface JobPostingApiDocs {
                     content = @Content(schema = @Schema(implementation = List.class)))
     })
     ResponseEntity<List<JobPostingResponse>> getAllJobPostings();
+
+    @Operation(summary = "내 채용 공고 조회", description = "로그인한 사용자가 작성한 채용 공고 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "내 채용 공고 목록 조회 성공",
+                    content = @Content(schema = @Schema(implementation = List.class))),
+            @ApiResponse(responseCode = "401", description = "인증되지 않은 사용자",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    ResponseEntity<List<JobPostingResponse>> getMyJobPostings(@CurrentUser User user);
 
     @Operation(summary = "채용 공고 단건 조회", description = "채용 공고 한 건을 조회합니다.")
     @ApiResponses(value = {

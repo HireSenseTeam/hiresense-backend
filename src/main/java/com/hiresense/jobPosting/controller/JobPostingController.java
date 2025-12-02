@@ -1,18 +1,22 @@
 package com.hiresense.jobPosting.controller;
 
+import java.net.URI;
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import com.hiresense.auth.config.CurrentUser;
 import com.hiresense.jobPosting.dto.request.JobPostingRequest;
 import com.hiresense.jobPosting.dto.request.JobPostingUpdateRequest;
 import com.hiresense.jobPosting.dto.response.JobPostingResponse;
 import com.hiresense.jobPosting.service.JobPostingService;
 import com.hiresense.question.dto.response.QuestionResponse;
 import com.hiresense.question.service.QuestionService;
+import com.hiresense.user.domain.User;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/job-postings")
@@ -23,8 +27,10 @@ public class JobPostingController implements JobPostingApiDocs {
     private final QuestionService questionService;
 
     @PostMapping
-    public ResponseEntity<JobPostingResponse> createJobPosting(@Valid @RequestBody JobPostingRequest request) {
-        JobPostingResponse response = jobPostingService.create(request);
+    public ResponseEntity<JobPostingResponse> createJobPosting(
+            @Valid @RequestBody JobPostingRequest request,
+            @CurrentUser User user) {
+        JobPostingResponse response = jobPostingService.create(request, user);
         return ResponseEntity.created(URI.create("/api/v1/job-postings/" + response.id())).body(response);
     }
 
@@ -51,6 +57,12 @@ public class JobPostingController implements JobPostingApiDocs {
     public ResponseEntity<Void> deleteJobPosting(@PathVariable Long id) {
         jobPostingService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<List<JobPostingResponse>> getMyJobPostings(@CurrentUser User user) {
+        List<JobPostingResponse> responses = jobPostingService.findByUser(user);
+        return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/{id}/questions")

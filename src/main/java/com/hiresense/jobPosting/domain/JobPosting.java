@@ -1,18 +1,15 @@
 package com.hiresense.jobPosting.domain;
 
+import java.util.Optional;
 import com.hiresense.global.entity.BaseTimeEntity;
 import com.hiresense.jobPosting.dto.request.JobPostingRequest;
 import com.hiresense.jobPosting.dto.request.JobPostingUpdateRequest;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.hiresense.user.domain.User;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.Optional;
 
 @Entity
 @Getter
@@ -30,8 +27,12 @@ public class JobPosting extends BaseTimeEntity {
     private String preferredQualifications;
     private String jobDescription;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
     @Builder
-    private JobPosting(String companyName, String jobTitle, String workLocation, String recruitmentPeriod, String qualifications, String idealCandidate, String preferredQualifications, String jobDescription) {
+    private JobPosting(String companyName, String jobTitle, String workLocation, String recruitmentPeriod, String qualifications, String idealCandidate, String preferredQualifications, String jobDescription, User user) {
         this.companyName = companyName;
         this.jobTitle = jobTitle;
         this.workLocation = workLocation;
@@ -40,9 +41,10 @@ public class JobPosting extends BaseTimeEntity {
         this.idealCandidate = idealCandidate;
         this.preferredQualifications = preferredQualifications;
         this.jobDescription = jobDescription;
+        this.user = user;
     }
 
-    public static JobPosting createJobPosting(JobPostingRequest request) {
+    public static JobPosting createJobPosting(JobPostingRequest request, User user) {
         return JobPosting.builder()
                 .companyName(request.companyName())
                 .jobTitle(request.jobTitle())
@@ -52,6 +54,7 @@ public class JobPosting extends BaseTimeEntity {
                 .idealCandidate(request.idealCandidate())
                 .preferredQualifications(request.preferredQualifications())
                 .jobDescription(request.jobDescription())
+                .user(user)
                 .build();
     }
 
