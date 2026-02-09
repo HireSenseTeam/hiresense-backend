@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: false
+
+logging:
+  level:
+    org.hibernate.SQL: OFF
+    org.hibernate.type.descriptor.sql: OFF
+    org.hibernate.orm.jdbc.bind: OFF
+    org.springframework: WARN
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+bedrock:
+  model-id: test-model
+  region: us-east-1
+  enabled: false
+
+jwt:
+  secret: RXR4a1Q9Smtybjdpc3cwQ2JjNmQ2V3pEd044MkdIckU3bURvMm9Qd0ZqQ0g=
+  expiration: 3600000
+  refresh-expiration: 604800000
