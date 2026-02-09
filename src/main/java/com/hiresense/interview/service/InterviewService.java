@@ -115,6 +115,7 @@ public class InterviewService {
 
     @Transactional
     public InterviewAnswerResponse handleAnswer(InterviewAnswerRequest request) {
+        long startTime = System.currentTimeMillis();
         log.info("답변 처리 요청: sessionId={}", request.sessionId());
 
         InterviewSession session = interviewSessionRepository.findWithDetailsById(request.sessionId())
@@ -147,6 +148,7 @@ public class InterviewService {
             interviewSessionRepository.save(session);
             log.info("면접 종료: sessionId={}", session.getId());
 
+            log.info("⚡ [비동기 채점 시작] 채점을 백그라운드 스레드로 위임합니다. sessionId={}", session.getId());
             interviewScoringService.scoreInterview(session, session.getJobPosting().getId())
                     .thenRun(() -> {
                         InterviewSession updatedSession = interviewSessionRepository.findWithDetailsById(session.getId())
@@ -168,6 +170,8 @@ public class InterviewService {
                         return null;
                     });
 
+            long elapsed = System.currentTimeMillis() - startTime;
+            log.info("⚡ [응답 반환] 면접 종료 응답 시간: {}ms (채점은 백그라운드에서 계속 진행 중)", elapsed);
             return InterviewAnswerResponse.withMessage("면접이 종료되었습니다. 수고하셨습니다.");
         }
 

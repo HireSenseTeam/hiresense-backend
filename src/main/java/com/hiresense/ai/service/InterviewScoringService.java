@@ -61,8 +61,9 @@ public class InterviewScoringService {
     @Async("taskExecutor")
     @Transactional
     public CompletableFuture<Void> scoreInterview(InterviewSession session, Long jobPostingId) {
-        log.info("[InterviewScoringService] 채점 시작: Session={}, Job={}, Applicant={}", 
-                session.getId(), jobPostingId, session.getApplicantEmail());
+        long scoringStartTime = System.currentTimeMillis();
+        log.info("⚡ [비동기 채점 스레드] 채점 시작 (스레드: {}) - Session={}, Job={}, Applicant={}",
+                Thread.currentThread().getName(), session.getId(), jobPostingId, session.getApplicantEmail());
 
         if (!bedrockConfig.isBedrockEnabled() || bedrockRuntimeClient == null) {
             log.warn("[InterviewScoringService] Bedrock이 비활성화되어 있습니다. 채점을 건너뜁니다.");
@@ -180,7 +181,9 @@ public class InterviewScoringService {
             );
 
             interviewScoreRepository.save(score);
-            log.info("[InterviewScoringService] 채점 결과 저장 완료: Session={}, Score={}", session.getId(), scoreDecimal);
+            long scoringElapsed = System.currentTimeMillis() - scoringStartTime;
+            log.info("⚡ [비동기 채점 완료] 총 채점 소요 시간: {}ms ({}초) - Session={}, Score={}",
+                    scoringElapsed, scoringElapsed / 1000.0, session.getId(), scoreDecimal);
             return CompletableFuture.completedFuture(null);
         } catch (BusinessException e) {
             log.error("[InterviewScoringService] 채점 결과 저장 실패: {}", e.getMessage(), e);
