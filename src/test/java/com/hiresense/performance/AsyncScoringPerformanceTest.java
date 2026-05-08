@@ -55,7 +55,7 @@ class AsyncScoringPerformanceTest {
     @Test
     @Order(2)
     @DisplayName("📊 비동기 방식 (After): @Async로 즉시 응답, 채점은 백그라운드")
-    void asyncScoringResponse() throws Exception {
+    void asyncScoringResponse() {
         System.out.println("\n" + "=".repeat(70));
         System.out.println("  [After] 비동기 방식: @Async로 채점 분리, 즉시 응답");
         System.out.println("  - handleAnswer() → CompletableFuture로 채점 위임 → 즉시 응답");
@@ -94,7 +94,7 @@ class AsyncScoringPerformanceTest {
     @Test
     @Order(3)
     @DisplayName("📊 성능 비교 요약: 동기 vs 비동기 응답 시간")
-    void performanceSummary() throws Exception {
+    void performanceSummary() {
         System.out.println("\n" + "=".repeat(70));
         System.out.println("  비동기 처리 성능 비교 요약");
         System.out.println("=".repeat(70));
