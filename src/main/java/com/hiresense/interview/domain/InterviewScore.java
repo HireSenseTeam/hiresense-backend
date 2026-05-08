@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_interview_score_job_posting_score", columnList = "job_posting_id, overall_score")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class InterviewScore {

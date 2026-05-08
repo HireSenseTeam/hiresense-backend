@@ -12,4 +12,12 @@ public interface InterviewQuestionRepository extends JpaRepository<InterviewQues
     
     @Query("SELECT COUNT(iq) FROM InterviewQuestion iq WHERE iq.interviewSession.id = :sessionId")
     int countByInterviewSessionId(@Param("sessionId") String sessionId);
+
+    @Query("""
+            SELECT iq.interviewSession.id, COUNT(iq)
+            FROM InterviewQuestion iq
+            WHERE iq.interviewSession.id IN :sessionIds
+            GROUP BY iq.interviewSession.id
+            """)
+    List<Object[]> countByInterviewSessionIds(@Param("sessionIds") List<String> sessionIds);
 }
