@@ -29,7 +29,13 @@ public enum ErrorCode {
     // 면접
     SCORING_IN_PROGRESS(HttpStatus.ACCEPTED, "I001", "채점이 아직 진행 중입니다. 잠시 후 다시 시도해주세요."),
     SCORING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "I002", "채점 처리 중 오류가 발생했습니다."),
-    SCORING_DATA_INVALID(HttpStatus.BAD_REQUEST, "I003", "채점 데이터 형식이 올바르지 않습니다.");
+    SCORING_DATA_INVALID(HttpStatus.BAD_REQUEST, "I003", "채점 데이터 형식이 올바르지 않습니다."),
+    INTERVIEW_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "I004", "면접 세션을 찾을 수 없습니다."),
+    INTERVIEW_ALREADY_IN_PROGRESS(HttpStatus.CONFLICT, "I005", "이미 진행 중인 면접이 있습니다."),
+    INTERVIEW_INVALID_STATUS(HttpStatus.CONFLICT, "I006", "현재 면접 상태에서 수행할 수 없는 요청입니다."),
+    INTERVIEW_NO_QUESTIONS(HttpStatus.CONFLICT, "I007", "면접에 사용할 질문이 없습니다."),
+    INTERVIEW_ALREADY_COMPLETED(HttpStatus.CONFLICT, "I008", "이미 모든 질문에 답변했습니다."),
+    SCORING_ALREADY_EXISTS(HttpStatus.CONFLICT, "I009", "이미 채점 결과가 저장된 면접입니다.");
 
     private final HttpStatus status;
     private final String code;
