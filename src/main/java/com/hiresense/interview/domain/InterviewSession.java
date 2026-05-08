@@ -52,17 +52,30 @@ public class InterviewSession extends BaseTimeEntity {
     }
 
     public void complete() {
+        if (this.status != InterviewStatus.IN_PROGRESS) {
+            throw new IllegalStateException("진행 중인 면접만 완료할 수 있습니다. 현재 상태: " + this.status);
+        }
         this.status = InterviewStatus.COMPLETED;
     }
 
-    public void markAsScored() {
+    public void startScoring() {
         if (this.status != InterviewStatus.COMPLETED) {
-            throw new IllegalStateException("면접이 완료되지 않아 채점할 수 없습니다. 현재 상태: " + this.status);
+            throw new IllegalStateException("완료된 면접만 채점을 시작할 수 있습니다. 현재 상태: " + this.status);
+        }
+        this.status = InterviewStatus.SCORING;
+    }
+
+    public void markAsScored() {
+        if (this.status != InterviewStatus.SCORING) {
+            throw new IllegalStateException("채점 중인 면접만 채점 완료 처리할 수 있습니다. 현재 상태: " + this.status);
         }
         this.status = InterviewStatus.SCORED;
     }
 
-    public void markAsError() {
-        this.status = InterviewStatus.ERROR;
+    public void markScoringFailed() {
+        if (this.status != InterviewStatus.SCORING) {
+            throw new IllegalStateException("채점 중인 면접만 채점 실패 처리할 수 있습니다. 현재 상태: " + this.status);
+        }
+        this.status = InterviewStatus.SCORING_FAILED;
     }
 }

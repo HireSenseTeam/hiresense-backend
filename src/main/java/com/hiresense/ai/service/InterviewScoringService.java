@@ -1,5 +1,6 @@
 package com.hiresense.ai.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hiresense.ai.config.BedrockConfig;
 import com.hiresense.ai.config.PromptProperties;
 import com.hiresense.ai.dto.request.AnthropicInvokeModelRequest;
@@ -7,7 +8,6 @@ import com.hiresense.ai.dto.request.ContentBlock;
 import com.hiresense.ai.dto.request.Message;
 import com.hiresense.ai.util.BedrockErrorHandler;
 import com.hiresense.ai.util.BedrockResponseParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hiresense.global.error.BusinessException;
 import com.hiresense.global.error.ErrorCode;
 import com.hiresense.interview.domain.InterviewAnswer;
@@ -15,6 +15,7 @@ import com.hiresense.interview.domain.InterviewScore;
 import com.hiresense.interview.domain.InterviewSession;
 import com.hiresense.interview.repository.InterviewAnswerRepository;
 import com.hiresense.interview.repository.InterviewScoreRepository;
+import com.hiresense.interview.repository.InterviewSessionRepository;
 import com.hiresense.jobPosting.domain.JobPosting;
 import com.hiresense.jobPosting.repository.JobPostingRepository;
 import com.hiresense.resume.domain.Resume;
@@ -53,6 +54,7 @@ public class InterviewScoringService {
     private final ObjectMapper objectMapper;
     private final InterviewAnswerRepository interviewAnswerRepository;
     private final InterviewScoreRepository interviewScoreRepository;
+    private final InterviewSessionRepository interviewSessionRepository;
     private final JobPostingRepository jobPostingRepository;
     private final ResumeRepository resumeRepository;
     private final BedrockResponseParser responseParser;
@@ -60,32 +62,43 @@ public class InterviewScoringService {
 
     @Async("taskExecutor")
     @Transactional
-    public CompletableFuture<Void> scoreInterview(InterviewSession session, Long jobPostingId) {
+    public CompletableFuture<Void> scoreInterview(String sessionId, Long jobPostingId, String applicantEmail) {
         long scoringStartTime = System.currentTimeMillis();
-        log.info("⚡ [비동기 채점 스레드] 채점 시작 (스레드: {}) - Session={}, Job={}, Applicant={}",
-                Thread.currentThread().getName(), session.getId(), jobPostingId, session.getApplicantEmail());
+        log.info("[비동기 채점 스레드] 채점 시작 (스레드: {}) - Session={}, Job={}, Applicant={}",
+                Thread.currentThread().getName(), sessionId, jobPostingId, applicantEmail);
 
         if (!bedrockConfig.isBedrockEnabled() || bedrockRuntimeClient == null) {
-            log.warn("[InterviewScoringService] Bedrock이 비활성화되어 있습니다. 채점을 건너뜁니다.");
-            return CompletableFuture.completedFuture(null);
+            log.warn("[InterviewScoringService] Bedrock이 비활성화되어 채점을 실패 처리합니다. sessionId={}", sessionId);
+            return CompletableFuture.failedFuture(
+                    new BusinessException(ErrorCode.SCORING_FAILED, "Bedrock이 비활성화되어 채점을 수행할 수 없습니다.")
+            );
+        }
+
+        InterviewSession session = interviewSessionRepository.findWithDetailsById(sessionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INTERVIEW_SESSION_NOT_FOUND));
+
+        if (interviewScoreRepository.findBySessionId(sessionId).isPresent()) {
+            return CompletableFuture.failedFuture(new BusinessException(ErrorCode.SCORING_ALREADY_EXISTS));
         }
 
         JobPosting jobPosting = jobPostingRepository.findById(jobPostingId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.JOB_POSTING_NOT_FOUND));
 
-        Resume resume = resumeRepository.findByEmail(session.getApplicantEmail())
+        Resume resume = resumeRepository.findByEmail(applicantEmail)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESUME_NOT_FOUND));
 
-        List<InterviewAnswer> allAnswers = interviewAnswerRepository.findBySessionId(session.getId());
-        
+        List<InterviewAnswer> allAnswers = interviewAnswerRepository.findBySessionId(sessionId);
+
         if (allAnswers.isEmpty()) {
-            log.warn("[InterviewScoringService] 답변이 없어 채점을 건너뜁니다.");
-            return CompletableFuture.completedFuture(null);
+            log.warn("[InterviewScoringService] 답변이 없어 채점을 실패 처리합니다. sessionId={}", sessionId);
+            return CompletableFuture.failedFuture(
+                    new BusinessException(ErrorCode.SCORING_FAILED, "저장된 답변이 없어 채점할 수 없습니다.")
+            );
         }
 
         String answersFormattedText = allAnswers.stream()
-                .map(answer -> String.format("Q (%s): %s\n", 
-                        answer.getQuestion().getId(), 
+                .map(answer -> String.format("Q: %s\nA: %s\n",
+                        answer.getQuestion().getText(),
                         answer.getAnswerText()))
                 .collect(Collectors.joining());
 
@@ -182,8 +195,8 @@ public class InterviewScoringService {
 
             interviewScoreRepository.save(score);
             long scoringElapsed = System.currentTimeMillis() - scoringStartTime;
-            log.info("⚡ [비동기 채점 완료] 총 채점 소요 시간: {}ms ({}초) - Session={}, Score={}",
-                    scoringElapsed, scoringElapsed / 1000.0, session.getId(), scoreDecimal);
+            log.info("[비동기 채점 완료] 총 채점 소요 시간: {}ms ({}초) - Session={}, Score={}",
+                    scoringElapsed, scoringElapsed / 1000.0, sessionId, scoreDecimal);
             return CompletableFuture.completedFuture(null);
         } catch (BusinessException e) {
             log.error("[InterviewScoringService] 채점 결과 저장 실패: {}", e.getMessage(), e);
@@ -207,7 +220,7 @@ public class InterviewScoringService {
             String scoreNumber = overallScoreStr.split("점")[0].trim();
             return new BigDecimal(scoreNumber);
         } else if (overallScoreObj instanceof Number) {
-            return new BigDecimal(((Number) overallScoreObj).doubleValue());
+            return BigDecimal.valueOf(((Number) overallScoreObj).doubleValue());
         } else {
             throw new BusinessException(ErrorCode.SCORING_DATA_INVALID, 
                     "overall_score 형식이 올바르지 않습니다: " + overallScoreObj.getClass());
@@ -217,14 +230,14 @@ public class InterviewScoringService {
     private int[] parseSuitabilityScores(Map<String, Object> finalReport) {
         @SuppressWarnings("unchecked")
         Map<String, Object> suitabilityScore = (Map<String, Object>) finalReport.get("suitability_score");
-        
+
         if (suitabilityScore == null) {
             throw new BusinessException(ErrorCode.SCORING_DATA_INVALID, "final_report에 'suitability_score'가 없습니다.");
         }
-        
+
         Object idealCandidateFitObj = suitabilityScore.get("ideal_candidate_fit");
         Object jobDescriptionFitObj = suitabilityScore.get("job_description_fit");
-        
+
         int idealCandidateFit = parseIntegerValue(idealCandidateFitObj, "ideal_candidate_fit");
         int jobDescriptionFit = parseIntegerValue(jobDescriptionFitObj, "job_description_fit");
         

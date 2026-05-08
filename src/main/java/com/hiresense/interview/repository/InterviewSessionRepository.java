@@ -15,9 +15,13 @@ public interface InterviewSessionRepository extends JpaRepository<InterviewSessi
     
     @EntityGraph(attributePaths = {"jobPosting", "resume"})
     List<InterviewSession> findByJobPostingId(Long jobPostingId);
-    
-        Optional<InterviewSession> findByJobPostingIdAndApplicantEmailAndStatus(Long jobPostingId, String applicantEmail, InterviewStatus status);
-    
+
+    Optional<InterviewSession> findFirstByJobPostingIdAndApplicantEmailAndStatusIn(
+            Long jobPostingId,
+            String applicantEmail,
+            List<InterviewStatus> statuses
+    );
+
     @EntityGraph(attributePaths = {"jobPosting", "resume"})
     Optional<InterviewSession> findWithDetailsById(String id);
 }
