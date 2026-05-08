@@ -4,13 +4,18 @@ spring:
     driver-class-name: org.h2.Driver
     username: sa
     password:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      timeout: 2000ms
   jpa:
     hibernate:
       ddl-auto: create-drop
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
         format_sql: false
 
 logging:
@@ -19,15 +24,15 @@ logging:
     org.hibernate.type.descriptor.sql: OFF
     org.hibernate.orm.jdbc.bind: OFF
     org.springframework: WARN
-  data:
-    redis:
-      host: localhost
-      port: 6379
 
 bedrock:
   model-id: test-model
   region: us-east-1
   enabled: false
+
+app:
+  cors:
+    allowed-origins: http://localhost:3000
 
 jwt:
   secret: RXR4a1Q9Smtybjdpc3cwQ2JjNmQ2V3pEd044MkdIckU3bURvMm9Qd0ZqQ0g=
