@@ -30,14 +30,14 @@ public class ResumeService {
         Resume resume = Resume.createFrom(request);
         Resume savedResume = resumeRepository.save(resume);
         log.info("이력서 생성이 완료되었습니다. id: {}", savedResume.getId());
-        
-        questionGenerationService.generateResumeQuestions(savedResume)
+
+        questionGenerationService.generateResumeQuestions(savedResume.getId())
                 .thenAccept(questions -> {
                     log.info("이력서 질문 생성 완료: resumeId={}, 질문 수={}", 
                             savedResume.getId(), questions.size());
                 })
                 .exceptionally(ex -> {
-                    log.error("이력서 질문 생성 중 오류 발생: resumeId={}, error={}", 
+                    log.error("이력서 질문 생성 중 오류 발생: resumeId={}, error={}",
                             savedResume.getId(), ex.getMessage(), ex);
                     return null;
                 });

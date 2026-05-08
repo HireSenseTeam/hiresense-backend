@@ -1,5 +1,6 @@
 package com.hiresense.ai.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hiresense.ai.config.BedrockConfig;
 import com.hiresense.ai.config.PromptProperties;
 import com.hiresense.ai.dto.request.AnthropicInvokeModelRequest;
@@ -7,12 +8,15 @@ import com.hiresense.ai.dto.request.ContentBlock;
 import com.hiresense.ai.dto.request.Message;
 import com.hiresense.ai.util.BedrockErrorHandler;
 import com.hiresense.ai.util.BedrockResponseParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hiresense.global.error.BusinessException;
+import com.hiresense.global.error.ErrorCode;
 import com.hiresense.jobPosting.domain.JobPosting;
+import com.hiresense.jobPosting.repository.JobPostingRepository;
 import com.hiresense.question.domain.Question;
 import com.hiresense.question.domain.QuestionType;
 import com.hiresense.question.repository.QuestionRepository;
 import com.hiresense.resume.domain.Resume;
+import com.hiresense.resume.repository.ResumeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -46,18 +50,23 @@ public class QuestionGenerationService {
     private final BedrockRuntimeClient bedrockRuntimeClient;
     private final ObjectMapper objectMapper;
     private final QuestionRepository questionRepository;
+    private final JobPostingRepository jobPostingRepository;
+    private final ResumeRepository resumeRepository;
     private final BedrockResponseParser responseParser;
     private final BedrockErrorHandler errorHandler;
 
     @Async("taskExecutor")
     @Transactional
-    public CompletableFuture<List<Question>> generateJobPostingQuestions(JobPosting jobPosting) {
-        log.info("[QuestionGenerationService] 채용공고 질문 생성을 시작합니다. JobPosting ID: {}", jobPosting.getId());
+    public CompletableFuture<List<Question>> generateJobPostingQuestions(Long jobPostingId) {
+        log.info("[QuestionGenerationService] 채용공고 질문 생성을 시작합니다. JobPosting ID: {}", jobPostingId);
 
         if (!bedrockConfig.isBedrockEnabled() || bedrockRuntimeClient == null) {
             log.warn("[QuestionGenerationService] Bedrock이 비활성화되어 있습니다. 질문 생성을 건너뜁니다.");
             return CompletableFuture.completedFuture(new ArrayList<>());
         }
+
+        JobPosting jobPosting = jobPostingRepository.findById(jobPostingId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.JOB_POSTING_NOT_FOUND));
 
         String idealCandidateText = jobPosting.getIdealCandidate();
         if (idealCandidateText == null || idealCandidateText.isBlank()) {
@@ -125,13 +134,16 @@ public class QuestionGenerationService {
 
     @Async("taskExecutor")
     @Transactional
-    public CompletableFuture<List<Question>> generateResumeQuestions(Resume resume) {
-        log.info("[QuestionGenerationService] 이력서 질문 생성을 시작합니다. Resume ID: {}", resume.getId());
+    public CompletableFuture<List<Question>> generateResumeQuestions(Long resumeId) {
+        log.info("[QuestionGenerationService] 이력서 질문 생성을 시작합니다. Resume ID: {}", resumeId);
 
         if (!bedrockConfig.isBedrockEnabled() || bedrockRuntimeClient == null) {
             log.warn("[QuestionGenerationService] Bedrock이 비활성화되어 있습니다. 질문 생성을 건너뜁니다.");
             return CompletableFuture.completedFuture(new ArrayList<>());
         }
+
+        Resume resume = resumeRepository.findById(resumeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESUME_NOT_FOUND));
 
         try {
             String actualMajor = resume.getAcademicRecord() != null && resume.getAcademicRecord().getMajor() != null

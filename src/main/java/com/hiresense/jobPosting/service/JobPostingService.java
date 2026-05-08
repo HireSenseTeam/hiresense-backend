@@ -1,10 +1,5 @@
 package com.hiresense.jobPosting.service;
 
-import java.util.List;
-import java.util.stream.Collectors;
-import com.hiresense.user.domain.User;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import com.hiresense.ai.service.QuestionGenerationService;
 import com.hiresense.global.error.exception.JobPostingNotFoundException;
 import com.hiresense.jobPosting.domain.JobPosting;
@@ -12,8 +7,14 @@ import com.hiresense.jobPosting.dto.request.JobPostingRequest;
 import com.hiresense.jobPosting.dto.request.JobPostingUpdateRequest;
 import com.hiresense.jobPosting.dto.response.JobPostingResponse;
 import com.hiresense.jobPosting.repository.JobPostingRepository;
+import com.hiresense.user.domain.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -30,7 +31,7 @@ public class JobPostingService {
         JobPosting savedJobPosting = jobPostingRepository.save(jobPosting);
         log.info("채용공고 생성이 완료되었습니다. id: {}", savedJobPosting.getId());
         
-        questionGenerationService.generateJobPostingQuestions(savedJobPosting)
+        questionGenerationService.generateJobPostingQuestions(savedJobPosting.getId())
                 .thenAccept(questions -> {
                     log.info("채용공고 질문 생성 완료: jobPostingId={}, 질문 수={}", 
                             savedJobPosting.getId(), questions.size());
