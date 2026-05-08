@@ -1,14 +1,23 @@
 package com.hiresense.resume.domain;
 
+import com.hiresense.global.entity.BaseTimeEntity;
+import com.hiresense.global.util.EnumConverter;
 import com.hiresense.resume.domain.enums.AcademicStatus;
 import com.hiresense.resume.domain.enums.EmploymentType;
 import com.hiresense.resume.domain.enums.ExperienceLevel;
 import com.hiresense.resume.domain.enums.Gender;
+import com.hiresense.resume.dto.request.AcademicRecordRequest;
+import com.hiresense.resume.dto.request.JobPreferenceRequest;
 import com.hiresense.resume.dto.request.ResumeRequest;
 import com.hiresense.resume.dto.request.ResumeUpdateRequest;
-import com.hiresense.global.entity.BaseTimeEntity;
-import com.hiresense.global.util.EnumConverter;
-import jakarta.persistence.*;
+import com.hiresense.resume.dto.request.WorkConditionRequest;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -66,32 +75,44 @@ public class Resume extends BaseTimeEntity {
 
     public static Resume createFrom(ResumeRequest request) {
         return Resume.builder()
-            .name(request.name())
-            .address(request.address())
-            .gender(EnumConverter.safeValueOf(Gender.class, request.gender()))
-            .birthYear(request.birthYear())
-            .phone(request.phone())
-            .email(request.email())
-            .homePhone(request.homePhone())
-            .academicRecord(new AcademicRecord(
-                request.academicRecord().schoolName(),
-                request.academicRecord().period(),
-                EnumConverter.safeValueOf(AcademicStatus.class, request.academicRecord().status()),
-                request.academicRecord().gpa(),
-                request.academicRecord().major()
-            ))
-            .jobPreference(new JobPreference(
-                request.jobPreference().desiredJob(),
-                EnumConverter.safeValueOf(ExperienceLevel.class, request.jobPreference().experienceLevel()),
-                request.jobPreference().description()
-            ))
-            .desiredRegion(request.desiredRegion())
-            .desiredSalary(request.desiredSalary())
-            .workCondition(new WorkCondition(
-                EnumConverter.safeValueOf(EmploymentType.class, request.workCondition().employmentType()),
-                request.workCondition().desiredHours()
-            ))
-            .build();
+                .name(request.name())
+                .address(request.address())
+                .gender(EnumConverter.safeValueOf(Gender.class, request.gender()))
+                .birthYear(request.birthYear())
+                .phone(request.phone())
+                .email(request.email())
+                .homePhone(request.homePhone())
+                .academicRecord(createAcademicRecord(request.academicRecord()))
+                .jobPreference(createJobPreference(request.jobPreference()))
+                .desiredRegion(request.desiredRegion())
+                .desiredSalary(request.desiredSalary())
+                .workCondition(createWorkCondition(request.workCondition()))
+                .build();
+    }
+
+    private static AcademicRecord createAcademicRecord(AcademicRecordRequest request) {
+        return new AcademicRecord(
+                request.schoolName(),
+                request.period(),
+                EnumConverter.safeValueOf(AcademicStatus.class, request.status()),
+                request.gpa(),
+                request.major()
+        );
+    }
+
+    private static JobPreference createJobPreference(JobPreferenceRequest request) {
+        return new JobPreference(
+                request.desiredJob(),
+                EnumConverter.safeValueOf(ExperienceLevel.class, request.experienceLevel()),
+                request.description()
+        );
+    }
+
+    private static WorkCondition createWorkCondition(WorkConditionRequest request) {
+        return new WorkCondition(
+                EnumConverter.safeValueOf(EmploymentType.class, request.employmentType()),
+                request.desiredHours()
+        );
     }
 
     public void updateFrom(ResumeUpdateRequest request) {
