@@ -1,134 +1,196 @@
-# Hiresense Backend 🌟
+# Hiresense Backend
 
-> AI 기반 맞춤형 면접 플랫폼 Hiresense의 백엔드 서버
+AWS Bedrock 기반 맞춤형 AI 면접 및 자동 채점 채용 플랫폼의 Spring Boot 백엔드입니다.
 
-## 📖 프로젝트 소개
+서버리스 MVP에서 출발한 프로젝트를 Spring Boot + MySQL 구조로 재설계하며, 면접 세션의 데이터 정합성, AI 채점 지연 시간, 랭킹 조회 성능, JWT 보안 한계를 개선하는 데 집중했습니다.
 
-Hiresense는 **이력서·채용공고를 분석해 AI가 맞춤형 면접 질문을 만들고**, 답변을 **비동기로 채점**해 **공정한 랭킹**으로 순위를 보여주는 **AI 면접 플랫폼**입니다.  
-지원자는 맞춤 질문에 답하고, 채용 담당자는 자동 채점·랭킹으로 효율적인 선발이 가능합니다.
+## Portfolio Summary
 
-## ✨ 핵심 기능
+### 1. Serverless MVP 한계 개선
 
-### 🔐 **1. 로그인/회원가입**
-- **이메일 기반**: 회원가입·로그인
-- **JWT 기반**: Access Token + Refresh Token
-- **Redis**: Refresh Token 저장, 로그아웃 시 Access Token Blacklist (TTL 기반)
-- **Refresh Token Rotation**: 재발급 시 기존 토큰 삭제로 탈취 피해 최소화
+**문제**
+- DynamoDB 기반 MVP에서는 이력서, 질문, 답변, 점수처럼 여러 데이터가 함께 변경되는 흐름에서 트랜잭션 관리가 어려웠습니다.
+- 랭킹, 복합 필터링처럼 정렬과 조건 조회가 필요한 기능에서 Scan 기반 처리가 늘어났습니다.
 
-### 📝 **2. 이력서·채용공고 관리**
-- **이력서 CRUD**: 학력, 희망 직무, 경력 수준, 근무 조건 등
-- **채용공고 CRUD**: 회사·직무·자격요건·인재상 등
-- **역할 분리**: 지원자(APPLICANT) / 채용 담당자(COMPANY)
+**해결**
+- Spring Boot + MySQL(RDS) 기반으로 전환하고, 면접 세션, 답변, 점수의 관계를 RDB 모델로 재설계했습니다.
+- `@Transactional`을 적용해 세션 단위 저장 흐름의 원자성을 확보했습니다.
 
-### 🤖 **3. AI 맞춤형 면접 질문**
-- **이력서 기반 질문**: AWS Bedrock(Claude)으로 이력서 분석 후 질문 생성
-- **채용공고 기반 질문**: 공고 내용에 맞는 질문 생성
-- **꼬리 질문**: 답변 흐름에 따른 실시간 후속 질문 생성
-- **비동기 생성**: 이력서/공고 저장 시 백그라운드에서 질문 생성
+**검증**
+- 50명 채점 결과 저장 테스트에서 데이터 유실과 중복이 발생하지 않음을 검증했습니다.
+- 동일 세션 중복 채점은 DB Unique 제약으로 차단됩니다.
 
-### 🎤 **4. 면접 세션·답변**
-- **면접 시작**: 공통 + 이력서 + 공고 질문 조합, 세션(UUID) 생성
-- **답변 제출**: 질문 순서대로 답변 저장, 세션 상태 관리(IN_PROGRESS → COMPLETED)
-- **재접속**: 진행 중 세션 조회로 이어하기 지원
+### 2. 비동기 AI 채점 파이프라인
 
-### ⚡ **5. 비동기 AI 채점**
-- **즉시 응답**: 면접 종료 API는 답변·세션 처리 후 바로 반환 (채점은 백그라운드)
-- **AWS Bedrock**: 정량 점수(총점, 인재상 적합도, 업무 적합도) + 정성 피드백(강점/약점/코멘트)
-- **트랜잭션·영속성**: ID 전달 + 재조회 패턴으로 LazyInitializationException 방지
+**문제**
+- AWS Bedrock 기반 AI 채점은 수 초의 지연 시간이 발생해, 동기 처리 시 사용자가 면접 종료 응답을 오래 기다려야 했습니다.
+- `@Async` 적용 시 기존 영속성 컨텍스트가 다른 스레드로 전파되지 않아 LazyInitializationException 위험이 있었습니다.
 
-### 🏆 **6. 랭킹 시스템**
-- **Standard Competition Ranking**: 동점자 동일 순위, 공정한 순위 표시
-- **반정규화**: InterviewScore에 jobPostingId, applicantEmail, applicantName 저장 → 조인 없이 단일 테이블 조회
-- **인덱스 기반 정렬**: `findByJobPostingIdOrderByOverallScoreDesc`로 성능 확보
+**해결**
+- 면접 종료 API는 답변 저장과 세션 상태 변경 후 즉시 응답합니다.
+- 비동기 채점 메서드에는 엔티티가 아니라 `sessionId`, `jobPostingId`, `applicantEmail`만 전달합니다.
+- 비동기 스레드 내부에서 새 트랜잭션으로 필요한 엔티티를 재조회합니다.
+- 답변 저장 트랜잭션이 커밋된 뒤 채점이 시작되도록 `afterCommit` 시점에 비동기 작업을 등록했습니다.
+- 면접 상태를 `IN_PROGRESS -> COMPLETED -> SCORING -> SCORED/SCORING_FAILED`로 분리했습니다.
 
-## 🛠 기술 스택
+**검증**
+- 시뮬레이션 테스트 기준, 동기 채점 응답 약 6초를 비동기 응답 수 ms 수준으로 단축했습니다.
+- 채점 실패 시 세션 상태를 `SCORING_FAILED`로 남겨 클라이언트가 조회 가능한 상태를 유지합니다.
 
-### Backend
-- **Framework**: Spring Boot 3.5.6
-- **Language**: Java 17
-- **Security**: Spring Security + JWT
-- **Database**: MySQL 8 (RDS)
-- **Cache / Token**: Redis (Refresh Token, Access Token Blacklist)
-- **ORM**: Spring Data JPA
+### 3. N+1 및 랭킹 조회 최적화
 
-### AI
-- **AWS Bedrock**: Claude 3 Haiku (질문 생성·채점)
+**문제**
+- 면접 세션 목록 조회 시 `JobPosting`, `Resume` 연관관계로 인해 N+1 쿼리 문제가 발생할 수 있었습니다.
+- 랭킹 조회에서 매번 여러 테이블을 조인하면 데이터 증가 시 병목이 커질 수 있었습니다.
 
-### DevOps
-- **Build Tool**: Gradle
-- **Deployment**: AWS EC2 (JAR 배포, deploy.sh)
-- **API 문서**: SpringDoc OpenAPI (Swagger UI)
+**해결**
+- `@EntityGraph`로 세션 목록 조회 시 필요한 연관 엔티티를 한 번에 로딩합니다.
+- `InterviewScore`에 랭킹 조회용 필드인 `jobPostingId`, `applicantEmail`, `applicantName`을 반정규화했습니다.
+- `job_posting_id, overall_score` 복합 인덱스를 추가해 공고별 점수 정렬 조회에 맞췄습니다.
+- 세션 목록의 질문 개수 조회는 세션별 count 반복 대신 group by 집계 쿼리로 처리합니다.
 
-### 인증·보안
-- **JWT**: Access Token(1시간), Refresh Token(7일)
-- **Redis**: Refresh Token 저장(7일 TTL), Blacklist(동적 TTL)
+**검증**
+- 세션 조회 쿼리 수를 22회에서 1회로 줄이는 시나리오를 테스트로 검증했습니다.
+- 랭킹 조회는 조인 기반 조회 대신 단일 테이블 조회 구조로 단순화했습니다.
 
-## 🚀 빠른 시작
+### 4. JWT + Redis 인증 보안
 
-### 로컬 개발 환경 설정
+**문제**
+- JWT는 Stateless 특성상 로그아웃 이후에도 토큰 만료 전까지 재사용될 수 있습니다.
+- Refresh Token 탈취 시 Access Token을 반복 발급받을 위험이 있습니다.
 
-#### 1. 저장소 클론
-```bash
-git clone <repository-url>
-cd hiresense-backend
+**해결**
+- 로그아웃 시 Access Token을 Redis blacklist에 저장하고, 인증 필터에서 재사용을 차단합니다.
+- blacklist TTL은 Access Token의 남은 만료 시간으로 설정해 자동 정리됩니다.
+- Refresh Token Rotation을 적용해 재발급 시 기존 Refresh Token을 폐기합니다.
+
+**검증**
+- 로그아웃 후 Access Token 재사용 차단, Refresh Token Rotation, Redis TTL 자동 정리 시나리오를 테스트로 검증했습니다.
+
+## Main Features
+
+- 이메일 기반 회원가입 및 로그인
+- JWT Access Token + Refresh Token 발급
+- Redis 기반 Refresh Token 저장 및 Access Token blacklist
+- 지원자 이력서 CRUD
+- 기업 채용공고 CRUD
+- AWS Bedrock Claude 기반 이력서/채용공고 맞춤 질문 생성
+- 면접 세션 시작, 답변 제출, 이어하기 조회
+- 비동기 AI 자동 채점
+- 점수 및 정성 피드백 조회
+- 공고별 Standard Competition Ranking 조회
+
+## Tech Stack
+
+- Java 17
+- Spring Boot 3.5.6
+- Spring Security
+- Spring Data JPA
+- MySQL 8
+- Redis
+- AWS Bedrock Claude 3 Haiku
+- SpringDoc OpenAPI
+- Gradle
+
+## Architecture
+
+```text
+Client
+  -> Spring Security JWT Filter
+  -> Controller
+  -> Service
+  -> Repository
+  -> MySQL
+
+Auth Service
+  -> Redis Refresh Token
+  -> Redis Access Token Blacklist
+
+Interview Service
+  -> Save answer and set session status to SCORING
+  -> @Async InterviewScoringService
+  -> AWS Bedrock
+  -> Save InterviewScore
+  -> Set session status to SCORED or SCORING_FAILED
 ```
 
-#### 2. 환경변수 설정
-```bash
-# application.yml / application-dev.yml 참고
-# JWT_SECRET, DB URL, Redis, AWS Bedrock 등 설정
+## Domain Flow
+
+```text
+IN_PROGRESS
+  -> answer submitted
+  -> COMPLETED
+  -> SCORING
+  -> SCORED
+
+SCORING
+  -> Bedrock/API/parsing error
+  -> SCORING_FAILED
 ```
 
-#### 3. DB·Redis 실행
+## Local Run
+
+### 1. Requirements
+
+- Java 17
+- MySQL 8
+- Redis
+
+### 2. Environment Variables
+
 ```bash
-# MySQL, Redis는 로컬 또는 Docker로 실행
-# 예: docker run -p 3306:3306 mysql:8
-#     docker run -p 6379:6379 redis:alpine
+export SPRING_PROFILES_ACTIVE=dev
+export DB_PASSWORD=your-local-db-password
+export JWT_SECRET=your-256-bit-secret
+export CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 ```
 
-#### 4. 애플리케이션 실행
+AWS Bedrock을 실제로 사용할 경우 AWS credential과 Bedrock 권한이 필요합니다.
+
+### 3. Run
+
 ```bash
 ./gradlew bootRun
-# 또는 IDE에서 HiresenseBackendApplication 실행
 ```
 
-## 🏗 프로젝트 구조
+Swagger UI:
 
-```
-src/
-├── main/
-│   ├── java/com/hiresense/
-│   │   ├── auth/           # 인증/인가 (JWT, Refresh, Blacklist)
-│   │   ├── ai/             # AWS Bedrock (질문 생성, 채점)
-│   │   ├── user/           # 사용자·역할
-│   │   ├── resume/         # 이력서 CRUD
-│   │   ├── jobPosting/     # 채용공고 CRUD
-│   │   ├── question/       # 질문 조회 (공통/이력서/공고)
-│   │   ├── interview/      # 면접 세션·답변·채점·랭킹
-│   │   ├── global/         # 예외 처리, 설정(Async 등), 공통
-│   │   └── config/         # Security, Redis, Swagger, JWT Filter
-│   └── resources/
-│       ├── application.yml
-│       ├── application-dev.yml
-│       └── application-prod.yml
-└── test/                   # 테스트 코드
+```text
+http://localhost:8000/swagger-ui/index.html
 ```
 
-## 🎯 개발 로드맵
+## Test
 
-### ✅ **Phase 1 - 서버리스 MVP (완료)**
-- Python Flask + AWS Lambda + DynamoDB
-- AI 면접 질문 생성 PoC
+테스트는 `test` 프로필과 H2 기반으로 독립 실행됩니다.
 
-### ✅ **Phase 2 - Spring 기반 고도화 (현재)**
-- Java 17 + Spring Boot + MySQL(RDS)
-- 트랜잭션 기반 데이터 정합성
-- 비동기 AI 채점, N+1 최적화(EntityGraph), 랭킹 반정규화
-- JWT Blacklist + Refresh Token Rotation
-- **AI-DEAS 학습동아리 대상 수상**
+```bash
+./gradlew test
+```
 
-### 🔄 **Phase 3 - 확장 (예정)**
-- 채점 실패 재시도 (Spring Retry / 메시지 큐)
-- CI/CD (GitHub Actions, ECR 등)
-- 모니터링·메트릭
+주요 테스트 범위:
 
+- 비동기 채점 응답 시간 비교
+- 면접 상태 전이
+- N+1 쿼리 최적화
+- 랭킹 조회 성능 비교
+- 트랜잭션 및 Unique 제약 기반 데이터 정합성
+- JWT blacklist, Refresh Token Rotation, Redis TTL
+
+## Production Profile
+
+`prod` 프로필은 환경변수 기반 설정을 사용합니다.
+
+필수 환경변수:
+
+```bash
+export SPRING_PROFILES_ACTIVE=prod
+export DB_URL=jdbc:mysql://...
+export DB_USERNAME=...
+export DB_PASSWORD=...
+export REDIS_HOST=...
+export REDIS_PORT=6379
+export JWT_SECRET=...
+export CORS_ALLOWED_ORIGINS=https://your-frontend-domain.com
+```
+
+운영 프로필에서는 `ddl-auto=validate`를 사용해 스키마 자동 변경을 막습니다.
